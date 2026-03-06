@@ -11,6 +11,8 @@ Users joining with standalone CS:GO may not trigger steamauth properly.
 
 **Usage is not recommended, as this allows for misuse and impersonation on servers.*
 
+It is better to instruct users to run csgo.exe externally (with `-steam`) from Steam or as a "non-Steam game", to get it to run as AppID 730.
+
 ## Building
 
 ### AMBuild
