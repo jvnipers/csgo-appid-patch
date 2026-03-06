@@ -6,8 +6,18 @@ on:
     branches: ['*']
 jobs:
   build:
-    runs-on: ubuntu-latest
-    name: linux-x86
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            os_short: linux
+            ext: .so
+          - os: windows-latest
+            os_short: windows
+            ext: .dll
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os_short }}-x86
     steps:
       - uses: actions/checkout@v6
         with:
@@ -43,6 +53,7 @@ jobs:
           python setup.py install --user
 
       - name: Install Linux dependencies
+        if: runner.os == 'Linux'
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
@@ -52,6 +63,7 @@ jobs:
 
       - name: Build
         working-directory: project
+        shell: bash
         run: |
           mkdir build && cd build
           python ../configure.py \
@@ -62,13 +74,14 @@ jobs:
           ambuild
 
       - name: Stage release files
+        shell: bash
         run: |
           mkdir -p staging/addons/sourcemod/extensions
-          find project/build -name '*.so' -exec cp {} staging/addons/sourcemod/extensions/ \;
+          find project/build -name '*${{ matrix.ext }}' -exec cp {} staging/addons/sourcemod/extensions/ \;
           touch staging/addons/sourcemod/extensions/csgo-appid-patch.ext.autoload
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: csgo-appid-patch-linux
+          name: csgo-appid-patch-${{ matrix.os_short }}
           path: staging/*

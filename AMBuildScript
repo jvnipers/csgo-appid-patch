@@ -26,6 +26,9 @@ def SetArchFlags(compiler):
   if compiler.behavior == 'gcc':
     if compiler.target.arch == 'x86_64':
       compiler.cflags += ['-fPIC']
+  elif compiler.like('msvc'):
+    if compiler.target.arch == 'x86_64':
+      compiler.defines += ['WIN64']
 
 class ExtensionConfig(object):
   def __init__(self):
@@ -99,6 +102,8 @@ class ExtensionConfig(object):
   def configure_cxx(self, cxx):
     if cxx.like('gcc'):
       self.configure_gcc(cxx)
+    elif cxx.family == 'msvc':
+      self.configure_msvc(cxx)
 
     if builder.options.opt == '1':
       cxx.defines += ['NDEBUG']
@@ -107,8 +112,8 @@ class ExtensionConfig(object):
 
     if cxx.target.platform == 'linux':
       self.configure_linux(cxx)
-    else:
-      raise Exception('Only Linux is supported')
+    elif cxx.target.platform == 'windows':
+      self.configure_windows(cxx)
 
   def configure_gcc(self, cxx):
     cxx.defines += [
@@ -143,6 +148,46 @@ class ExtensionConfig(object):
         cxx.cflags += ['-O3']
     cxx.cflags += ['-fno-omit-frame-pointer']
 
+  def configure_msvc(self, cxx):
+    if builder.options.debug == '1':
+      cxx.cflags += ['/MTd']
+      cxx.linkflags += ['/NODEFAULTLIB:libcmt']
+    else:
+      cxx.cflags += ['/MT']
+    cxx.defines += [
+      '_CRT_SECURE_NO_DEPRECATE',
+      '_CRT_SECURE_NO_WARNINGS',
+      '_CRT_NONSTDC_NO_DEPRECATE',
+      '_ITERATOR_DEBUG_LEVEL=0',
+    ]
+    cxx.cflags += ['/W3']
+    cxx.cxxflags += [
+      '/EHsc',
+      '/GR-',
+      '/TP',
+      '/std:c++17',
+    ]
+    cxx.linkflags += [
+      'kernel32.lib',
+      'user32.lib',
+      'gdi32.lib',
+      'winspool.lib',
+      'comdlg32.lib',
+      'advapi32.lib',
+      'shell32.lib',
+      'ole32.lib',
+      'oleaut32.lib',
+      'uuid.lib',
+      'odbc32.lib',
+      'odbccp32.lib',
+    ]
+    if builder.options.opt == '1':
+      cxx.cflags += ['/Ox', '/Zo']
+      cxx.linkflags += ['/OPT:ICF', '/OPT:REF']
+    if builder.options.debug == '1':
+      cxx.cflags += ['/Od', '/RTC1']
+    cxx.cflags += ['/Oy-']
+
   def configure_linux(self, cxx):
     cxx.defines += ['LINUX', '_LINUX', 'POSIX', '_FILE_OFFSET_BITS=64']
     cxx.linkflags += ['-lm']
@@ -151,6 +196,9 @@ class ExtensionConfig(object):
     elif cxx.family == 'clang':
       cxx.linkflags += ['-lgcc_eh']
     cxx.linkflags += ['-static-libstdc++']
+
+  def configure_windows(self, cxx):
+    cxx.defines += ['WIN32', '_WINDOWS']
 
   def ConfigureForExtension(self, context, compiler):
     compiler.cxxincludes += [
