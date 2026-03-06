@@ -1,7 +1,7 @@
 
 # Steam AppID patcher
 
-SM extension to patch engine to let standalone CS:GO (4465480) players join a standard AppID 730 server.
+SM extension to patch engine to let standalone CS:GO (4465480) players join a standard AppID 730/(740) server.
 
 Linux only.
 
