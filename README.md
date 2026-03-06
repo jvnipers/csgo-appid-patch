@@ -9,6 +9,8 @@ Notice that using this will let players with VAC/Game bans on CS:GO/CS2 (730) jo
 
 Users joining with standalone CS:GO may not trigger steamauth properly.
 
+**Usage is not recommended, as this allows for misuse and impersonation on servers.*
+
 ## Building
 
 ### AMBuild
